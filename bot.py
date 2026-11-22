@@ -28,6 +28,19 @@ async def on_message(message):
         await message.channel.send("Salió el " + str(numero))
     elif message.content == "kael":
         await message.channel.send("Es un novato sin duda el compa jajj")
+    elif message.content.startswith("!saludo"):
+        partes = message.content.split()
+        nombre = partes[1]
+        await message.channel.send("Hola " + nombre)
+    elif message.content.startswith("!suma"):
+        partes = message.content.split()
+        numero1 = int(partes[1])
+        if len(partes) == 3:
+            numero2 = int(partes[2])
+        else:
+            numero2 = int(partes[3])
+        resultado = numero1 + numero2
+        await message.channel.send("El resultado de la suma es: " + str(resultado))
 
 @client.event
 async def on_voice_state_update(member, before, after):
