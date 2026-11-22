@@ -28,6 +28,19 @@ async def on_message(message):
         await message.channel.send("Salió el " + str(numero))
     elif message.content == "kael":
         await message.channel.send("Es un novato sin duda el compa jajj")
+
+@client.event
+async def on_voice_state_update(member, before, after):
+    if before.channel is None and after.channel is not None:
+        for c in member.guild.text_channels:
+            print(c.name)
+        canal = discord.utils.get(member.guild.text_channels, name="avisos")
+        await canal.send(member.name + " Entró a jugar 🎮")
+    elif before.channel is not None and after.channel is None:
+        canal = discord.utils.get(member.guild.text_channels, name="avisos")
+        await canal.send(member.name + " Salio del Canal 💩")
+        print(member.name, "Salió del canal")
+
     
 
 if not TOKEN:
