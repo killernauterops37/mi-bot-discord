@@ -1,58 +1,46 @@
+#Imports
+#=======================================================================================================================
+#=======================================================================================================================
 import asyncio
 import json
 import os
 import random
 
 import discord
+from discord import app_commands
 from dotenv import load_dotenv
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
+#Variables
+#=======================================================================================================================
+#=======================================================================================================================
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
-
+tree = app_commands.CommandTree(client)
+#=======================================================================================================================
+#=======================================================================================================================
 try:
     with open("datos.json", "r") as archivo:
         contador = json.load(archivo)
 except FileNotFoundError:
     contador = {}
-
+#Def
+#=======================================================================================================================
+#=======================================================================================================================
 def guardar_datos():
     with open("datos.json", "w") as archivo:
         json.dump(contador, archivo)
-
+#=======================================================================================================================
+#=======================================================================================================================
+# Rama de @client.event
 @client.event
 async def on_ready():
     print("Bot conectado como", client.user)
-
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-    print(message.author, "dijo:", message.content)
-
-    if message.content == "hola":
-        await message.channel.send("¡Hola! ¿Cómo estás?")
-    elif message.content == "!dado":
-        numero = random.randint(1,6)
-        await message.channel.send("Salió el " + str(numero))
-    elif message.content == "kael":
-        await message.channel.send("Es un novato sin duda el compa jajj")
-    elif message.content.startswith("!saludo"):
-        partes = message.content.split()
-        nombre = partes[1]
-        await message.channel.send("Hola " + nombre)
-    elif message.content.startswith("!suma"):
-        partes = message.content.split()
-        numero1 = int(partes[1])
-        if len(partes) == 3:
-            numero2 = int(partes[2])
-        else:
-            numero2 = int(partes[3])
-        resultado = numero1 + numero2
-        await message.channel.send("El resultado de la suma es: " + str(resultado))
+    await tree.sync()
+    print("Comandos / sincronizados")
 
 @client.event
 async def on_voice_state_update(member, before, after):
@@ -64,11 +52,46 @@ async def on_voice_state_update(member, before, after):
         await canal.send(nombre + " Entró a jugar 🎮( Van " + str(contador[nombre]) + " veces Ojito)")
     elif before.channel is not None and after.channel is None:
         canal = discord.utils.get(member.guild.text_channels, name="‼️-funas-‼️")
-        await canal.send(member.name + " Salio del Canal 💩")
+        await canal.send(member.name + " 🏃 Salio del Canal el rata 💩🏃")
         print(member.name, "Salió del canal")
+#=======================================================================================================================
+#=======================================================================================================================
+# Rama de @tree.command
+@tree.command(name="saludo", description="El bot saluda")
+async def saludo(interaction: discord.Interaction):
+    nombre = interaction.user.name
+    await interaction.response.send_message("🤖🎉¡Hola " + nombre + " 🎉🤖")
+#=======================================================================================================================
+#=======================================================================================================================
+@tree.command(name="suma", description="Suma dos números 1️⃣➕1️⃣")
+async def suma(interaction: discord.Interaction, numero1: int, numero2: int):
+    resultado = numero1 + numero2
+    await interaction.response.send_message("‼️El resultado es: " + str(resultado) + "✏️✏️")
+#=======================================================================================================================
+#=======================================================================================================================
+@tree.command(name="dado", description="🎲Juego Del dado🎲")
+async def dado(interaction: discord.Interaction):
+    numero = random.randint(1,6)
+    await interaction.response.send_message("🎲 Salio el: " + str(numero) + " 🎲 🎲")
+#=======================================================================================================================
+#=======================================================================================================================
+@tree.command(name="ranking", description="🏆Muestra quíen ha entrado más veces a jugar🏆")
+async def ranking(interaction: discord.Interaction):
+    ordenado = sorted(contador.items(), key=lambda x: x[1], reverse=True)
+    texto = "=====🔥Ranking\n"
+    for posicion, (nombre, cantidad) in enumerate(ordenado[:3], start=1):
+        texto = texto + str(posicion) + ".🏆 " + nombre + " - " + str(cantidad) + "veces\n"
+    await interaction.response.send_message(texto)
+#=======================================================================================================================
+#=======================================================================================================================
 
-    
 
+
+
+
+
+#=======================================================================================================================
+#=======================================================================================================================
 if not TOKEN:
     raise RuntimeError("Configura DISCORD_TOKEN en el archivo .env")
 
